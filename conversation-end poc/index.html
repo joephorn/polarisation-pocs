@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conversation Flow</title>
+  <style>
+    body {
+      margin: 0;
+      background: url('background.png') center/cover no-repeat;
+      font-family: sans-serif;
+      font-weight: lighter;
+      overflow: hidden;
+      color: #000;
+    }
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .character {
+      position: absolute;
+      bottom: 5%;
+      width: 100px;
+      height: auto;
+      /* filter: brightness(150%) contrast(120%) drop-shadow(0 0 6px rgba(0, 170, 255, 0.7)); */
+      opacity: 0.8;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    .left { left: 5%; }
+    .right { right: 5%; }
+
+    .bubble {
+      max-width: 300px;
+      background: rgba(0,0,0,0.02);
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin: 10px;
+      line-height: 1.4em;
+    }
+    .left-bubble {
+      text-align: left;
+      align-self: flex-start;
+    }
+    .right-bubble {
+      text-align: left;
+      align-self: flex-end;
+    }
+    .playerchoice {
+      color: #fff;
+      background-color: #000;
+      align-self: center;
+      text-align: center;
+    }
+
+    .conversation {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 300px;
+      margin-top: 20px;
+      margin-bottom: 230px;
+      overflow-y: auto;
+    }
+
+    .choices {
+      position: absolute;
+      bottom: 10%;
+      display: flex;
+      flex-direction: column;
+      align-self: center;
+      gap: 10px;
+    }
+
+    .choice-button {
+      background: none;
+      border: none;
+      /* font-family: monospace; */
+      color: #000;
+      font-size: 1rem;
+      cursor: pointer;
+      text-align: left;
+    }
+    .choice-button:hover {
+      text-decoration: underline;
+    }
+    #endText{
+      display: flex;
+      position: absolute;
+      align-self: center;
+      justify-content: center;
+      top:49%;
+      color: #000;
+      width: 80%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img class="character left" id="charLeft" alt="Left Character">
+    <img class="character right" id="charRight" alt="Right Character">
+    <div class="conversation" id="conversation"></div>
+    <div class="choices" id="choices"></div>
+    <div id="endText"></div>
+  </div>
+
+  <script>
+    const containerEl = document.getElementsByClassName('container');
+    const conversationEl = document.getElementById('conversation');
+    const choicesEl = document.getElementById('choices');
+    const charLeft = document.getElementById('charLeft');
+    const charRight = document.getElementById('charRight');
+
+    function selectCharacters() {
+      const characters = [
+        { name: "kanye", src: "holo.png" },
+        { name: "einstein", src: "holo1.png" }
+      ];
+      let leftIndex = 0;
+      let rightIndex = 1;
+
+      charLeft.src = characters[leftIndex].src;
+      charRight.src = characters[rightIndex].src;
+    }
+
+    const conversation = [
+      { side: 'left', text: "Free will is an illusion." },
+      { side: 'right', text: "We act as if we choose. But every thought comes from somewhere — history, biology, context." },
+      { side: 'left', text: "That doesn’t mean I didn’t choose it." },
+      { side: 'right', text: "It means the choice chose you." },
+      { side: 'left', text: "That’s bullshit." },
+      { side: 'right', text: "Even defiance is predictable. Especially when it becomes your identity." },
+      { side: 'left', text: "So what? You want people to sit still and thank the pattern?" },
+      { side: 'right', text: "I want them to understand it. That’s the only way to move differently." },
+    ];
+
+    const choices = [
+      ["[CUT] Are you making choices — or performing them?", "[PRESS] When’s the last time you were surprised by yourself?", "[FREEZE] What if you're just defending the cage that shaped you?"],
+      ["[CHALLENGE] So what is freedom then?", "[REFLECT] Could that explain your decisions?", "[EXIT] I'm done listening."]
+    ];
+
+    let index = 0;
+    let choiceIndex = 0;
+
+    function showNext() {
+      if (index < conversation.length) {
+        const { side, text } = conversation[index];
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${side}-bubble`;
+        if (index === 0) {
+          bubble.classList.add('playerchoice');
+        }
+        bubble.textContent = text;
+
+        conversationEl.appendChild(bubble);
+        index++;
+
+        conversationEl.scrollTop = conversationEl.scrollHeight;
+
+        if (index % 4 === 0 && choiceIndex < choices.length) {
+          setTimeout(showChoices, 1000);
+        } else {
+          setTimeout(showNext, 1000 + Math.random() * 1000);
+        }
+      } else {
+        ending2()
+      }
+    }
+
+    function ending1() {
+      conversationEl.style.display = 'none'
+      charLeft.style.display = 'none'
+      charRight.style.display = 'none'
+    }
+
+    function ending2() {
+      conversationEl.style.display = 'none'
+      charLeft.style.display = 'none'
+      charRight.style.display = 'none'
+
+      const end = document.getElementById('endText');
+      end.innerHTML = 'They stopped listening.';
+    }
+
+    function showChoices() {
+      choicesEl.innerHTML = '';
+      choices[choiceIndex].forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-button';
+        btn.textContent = choice;
+        btn.onclick = () => {
+          const userResponse = document.createElement('div');
+          userResponse.className = 'bubble playerchoice';
+          userResponse.textContent = choice;
+          conversationEl.appendChild(userResponse);
+          conversationEl.scrollTop = conversationEl.scrollHeight;
+          choicesEl.innerHTML = '';
+          choiceIndex++;
+          setTimeout(showNext, 1000);
+        };
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    selectCharacters();
+    showNext();
+  </script>
+</body>
+</html>

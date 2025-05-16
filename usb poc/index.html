@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>USB Simulation</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 2em;">
+  <h1>USB Simulation Interface</h1>
+  <p id="status">Waiting for USB input...</p>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    ipcRenderer.on('usb-added', (event, device) => {
+      document.getElementById('status').innerText =
+        `USB Inserted: Vendor ${device.idVendor}, Product ${device.idProduct}`;
+    });
+
+    ipcRenderer.on('usb-removed', (event, id) => {
+      document.getElementById('status').innerText =
+        `USB Removed: Device ID ${id}`;
+    });
+  </script>
+</body>
+</html>

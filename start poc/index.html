@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flow POC</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #191919;
+      font-family: monospace;
+      font-size: large;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+    }
+    .terminal {
+      max-width: 800px;
+      padding: 2rem;
+    }
+    .log-line {
+      margin-bottom: 0.5rem;
+    }
+    .log-line.gray {
+      color: #666;
+    }
+    .fade {
+      opacity: 0;
+      transition: opacity 3s ease;
+    }
+    .fade.show {
+      opacity: 1;
+    }
+    .center-content {
+      flex: 1;
+      display: flex;
+      position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .agents {
+      display: flex;
+      gap: 2rem;
+      margin: 2rem 0;
+      font-size: small;
+    }
+    .agent-slot {
+      width: 150px;
+      height: 200px;
+      border: 2px solid #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #aaa;
+      background-color: #222;
+      transition: all 0.3s ease;
+    }
+    .agent-slot.active {
+      border-color: #0f0;
+      color: #0f0;
+      background-color: #111;
+    }
+    .topics {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .topics button {
+      all: unset;
+      cursor: pointer;
+    }
+    .topics button:hover {
+      text-decoration: underline;
+    }
+    .boot-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+    }
+    .progress-bar {
+      width: 300px;
+      height: 10px;
+      background: #333;
+      margin-top: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-bar::after {
+      content: "";
+      position: absolute;
+      height: 100%;
+      left: 0;
+      background: #fff;
+      animation: loading 4s infinite;
+    }
+    @keyframes loading {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal" id="terminal"></div>
+  <div class="center-content fade show" id="centerContent"></div>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const centerContent = document.getElementById('centerContent');
+    let state = 'selecting';
+    let log = [];
+
+    function renderLog() {
+      terminal.innerHTML = '';
+      log.forEach((line, i) => {
+        const div = document.createElement('div');
+        div.className = 'log-line' + (i < log.length - 1 ? ' gray' : '');
+        div.textContent = line;
+        terminal.appendChild(div);
+      });
+    }
+
+    function addLogLineDelayed(lines, delay = 500, callback) {
+      if (lines.length === 0) {
+        if (callback) callback();
+        return;
+      }
+      const line = lines.shift();
+      log.push(line);
+      renderLog();
+      setTimeout(() => addLogLineDelayed(lines, delay, callback), delay);
+    }
+
+    function fadeTransition(callback) {
+      centerContent.classList.remove('show');
+      setTimeout(() => {
+        centerContent.innerHTML = '';
+        callback();
+        requestAnimationFrame(() => centerContent.classList.add('show'));
+      }, 300);
+    }
+
+    function renderSelection() {
+      fadeTransition(() => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'agents';
+
+        for (let i = 0; i < 2; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'agent-slot';
+          slot.textContent = 'INSERT AGENT';
+          slot.onclick = () => {
+            slot.textContent = i === 0 ? 'GANDHI.AI' : 'STALIN.AI';
+            slot.classList.add('active');
+            agentInserted[i] = true;
+            log.push(`USB detected: SLOT_${i === 0 ? 'A' : 'B'}`);
+            renderLog();
+            addLogLineDelayed([
+              `Reading module: ${i === 0 ? 'GANDHI.AI' : 'STALIN.AI'}`,
+              "Loading ideological construct...",
+              "Status: ONLINE"
+            ], 500, checkAgents);
+          };
+          wrapper.appendChild(slot);
+          agentSlots.push(slot);
+        }
+        centerContent.appendChild(wrapper);
+      });
+    }
+
+    function checkAgents() {
+      if (agentInserted.every(Boolean) && state === 'selecting') {
+        state = 'topics';
+        addLogLineDelayed(["Select simulation topic..."]);
+        renderTopics();
+      }
+    }
+
+    function renderTopics() {
+      fadeTransition(() => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'topics';
+        const topics = [
+          "WE CAN'T SAVE EVERYONE",
+          "FREEDOM VS CONTROL",
+          "TRUTH VS COMFORT",
+          "FREE WILL IS AN ILLUSION",
+          "TRADITION IS A CAGE"
+        ];
+        topics.forEach(topic => {
+          const btn = document.createElement('button');
+          btn.textContent = `[ ${topic} ]`;
+          btn.onclick = () => startBoot(topic);
+          wrapper.appendChild(btn);
+        });
+        terminal.appendChild(wrapper);
+      });
+    }
+
+    function startBoot(topic) {
+      state = 'booting';
+      log.push(`> Booting simulation: ${topic}...`);
+      renderLog();
+
+      fadeTransition(() => {
+        terminal.innerHTML = '';
+        centerContent.innerHTML = '';
+        const boot = document.createElement('div');
+        boot.className = 'boot-screen';
+        boot.innerHTML = `<p>> Booting simulation: ${topic}...</p><div class="progress-bar"></div>`;
+        centerContent.appendChild(boot);
+      });
+    }
+
+    const agentInserted = [false, false];
+    const agentSlots = [];
+
+    log.push('> Insert 2 ideological agents...');
+    renderLog();
+    renderSelection();
+  </script>
+</body>
+</html>
